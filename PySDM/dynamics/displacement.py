@@ -130,6 +130,7 @@ class Displacement:  # pylint: disable=too-many-instance-attributes
             cell_origin=cell_origin,
             position_in_cell=position_in_cell,
             n_substeps=self._n_substeps,
+            # TODO: FLAGA MOŻE BEDZIE TU POTRZEBANA
         )
         if self.enable_sedimentation:
             displacement_z = displacement[self.dimension - 1, :]
