@@ -426,7 +426,7 @@ class Particulator:  # pylint: disable=too-many-public-methods,too-many-instance
         self.attributes.sanitize()
 
     def calculate_displacement(
-        self, *, displacement, courant, cell_origin, position_in_cell, n_substeps
+        self, *, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps
     ):
         for dim in range(len(self.environment.mesh.grid)):
             self.backend.calculate_displacement(
@@ -435,6 +435,7 @@ class Particulator:  # pylint: disable=too-many-public-methods,too-many-instance
                 courant=courant[dim],
                 cell_origin=cell_origin,
                 position_in_cell=position_in_cell,
+                cell_id=cell_id,
                 n_substeps=n_substeps,
             )
 

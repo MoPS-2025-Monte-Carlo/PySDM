@@ -1,0 +1,232 @@
+Subject: [PATCH] Changes now
+---
+Index: PySDM/physics/particle_advection/monte_carlo.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/PySDM/physics/particle_advection/monte_carlo.py b/PySDM/physics/particle_advection/monte_carlo.py
+new file mode 100644
+--- /dev/null	(date 1748957088176)
++++ b/PySDM/physics/particle_advection/monte_carlo.py	(date 1748957088176)
+@@ -0,0 +1,15 @@
++class MonteCarlo:
++    def __init__(self, _):
++        pass
++
++    @staticmethod
++    def displacement(_, position_in_cell, cell_id, c_l, c_r, u01):
++        c = max(c_l, c_r)
++        probability_of_shift = abs(c)
++        assert (
++            probability_of_shift
++            < 1
++        )
++
++        sign = int(abs(c) / c)
++        return cell_id + (probability_of_shift > u01) * sign
+Index: PySDM/backends/impl_numba/methods/displacement_methods.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/PySDM/backends/impl_numba/methods/displacement_methods.py b/PySDM/backends/impl_numba/methods/displacement_methods.py
+--- a/PySDM/backends/impl_numba/methods/displacement_methods.py	(revision c256737f19eeb34f642e6fb85e54b5f87f346831)
++++ b/PySDM/backends/impl_numba/methods/displacement_methods.py	(date 1748960663255)
+@@ -7,6 +7,7 @@
+ import numba
+ 
+ from PySDM.backends.impl_numba import conf
++from PySDM.physics.particle_advection import MonteCarlo
+ 
+ from ...impl_common.backend_methods import BackendMethods
+ 
+@@ -14,21 +15,23 @@
+ @numba.njit(**{**conf.JIT_FLAGS, **{"parallel": False}})
+ # pylint: disable=too-many-arguments
+ def calculate_displacement_body_common(
+-    dim, droplet, scheme, _l, _r, displacement, courant, position_in_cell, n_substeps
++    dim, droplet, scheme, _l, _r, displacement, courant, position_in_cell, cell_id, n_substeps, use_monte_carlo_method, rng
+ ):
+     displacement[dim, droplet] = scheme(
+         position_in_cell[dim, droplet],
++        cell_id[dim, droplet],
+         courant[_l] / n_substeps,
+         courant[_r] / n_substeps,
++        use_monte_carlo_method,
++        rng.unform(0., 1.)
+     )
+-
+ 
+ class DisplacementMethods(BackendMethods):
+     @staticmethod
+     @numba.njit(**{**conf.JIT_FLAGS, **{"parallel": False, "cache": False}})
+     # pylint: disable=too-many-arguments
+     def calculate_displacement_body_1d(
+-        dim, scheme, displacement, courant, cell_origin, position_in_cell, n_substeps
++        dim, scheme, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, use_monte_carlo_method, rng
+     ):
+         length = displacement.shape[1]
+         for droplet in numba.prange(length):  # pylint: disable=not-an-iterable
+@@ -44,14 +47,17 @@
+                 displacement,
+                 courant,
+                 position_in_cell,
++                cell_id,
+                 n_substeps,
++                use_monte_carlo_method,
++                rng,
+             )
+ 
+     @staticmethod
+     @numba.njit(**{**conf.JIT_FLAGS, **{"parallel": False, "cache": False}})
+     # pylint: disable=too-many-arguments
+     def calculate_displacement_body_2d(
+-        dim, scheme, displacement, courant, cell_origin, position_in_cell, n_substeps
++        dim, scheme, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, use_monte_carlo_method, rng
+     ):
+         length = displacement.shape[1]
+         for droplet in numba.prange(length):  # pylint: disable=not-an-iterable
+@@ -73,14 +79,17 @@
+                 displacement,
+                 courant,
+                 position_in_cell,
++                cell_id,
+                 n_substeps,
++                use_monte_carlo_method,
++                rng,
+             )
+ 
+     @staticmethod
+     @numba.njit(**{**conf.JIT_FLAGS, **{"parallel": False, "cache": False}})
+     # pylint: disable=too-many-arguments
+     def calculate_displacement_body_3d(
+-        dim, scheme, displacement, courant, cell_origin, position_in_cell, n_substeps
++        dim, scheme, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, use_monte_carlo_method, rng
+     ):
+         n_sd = displacement.shape[1]
+         for droplet in numba.prange(n_sd):  # pylint: disable=not-an-iterable
+@@ -104,11 +113,14 @@
+                 displacement,
+                 courant,
+                 position_in_cell,
++                cell_id,
+                 n_substeps,
++                use_monte_carlo_method,
++                rng,
+             )
+ 
+     def calculate_displacement(
+-        self, *, dim, displacement, courant, cell_origin, position_in_cell, n_substeps
++        self, *, dim, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, use_monte_carlo_method
+     ):
+         n_dims = len(courant.shape)
+         scheme = self.formulae.particle_advection.displacement
+@@ -120,7 +132,10 @@
+                 courant.data,
+                 cell_origin.data,
+                 position_in_cell.data,
++                cell_id.data,
+                 n_substeps,
++                use_monte_carlo_method,
++                self.Random.generator,
+             )
+         elif n_dims == 2:
+             DisplacementMethods.calculate_displacement_body_2d(
+@@ -130,7 +145,10 @@
+                 courant.data,
+                 cell_origin.data,
+                 position_in_cell.data,
++                cell_id.data,
+                 n_substeps,
++                use_monte_carlo_method,
++                self.Random.generator,
+             )
+         elif n_dims == 3:
+             DisplacementMethods.calculate_displacement_body_3d(
+@@ -140,7 +158,10 @@
+                 courant.data,
+                 cell_origin.data,
+                 position_in_cell.data,
++                cell_id.data,
+                 n_substeps,
++                use_monte_carlo_method,
++                self.Random.generator,
+             )
+         else:
+             raise NotImplementedError()
+Index: PySDM/particulator.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/PySDM/particulator.py b/PySDM/particulator.py
+--- a/PySDM/particulator.py	(revision c256737f19eeb34f642e6fb85e54b5f87f346831)
++++ b/PySDM/particulator.py	(date 1748913306056)
+@@ -426,7 +426,7 @@
+         self.attributes.sanitize()
+ 
+     def calculate_displacement(
+-        self, *, displacement, courant, cell_origin, position_in_cell, n_substeps
++        self, *, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps
+     ):
+         for dim in range(len(self.environment.mesh.grid)):
+             self.backend.calculate_displacement(
+@@ -435,6 +435,7 @@
+                 courant=courant[dim],
+                 cell_origin=cell_origin,
+                 position_in_cell=position_in_cell,
++                cell_id=cell_id,
+                 n_substeps=n_substeps,
+             )
+ 
+Index: PySDM/physics/particle_advection/implicit_in_space.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/PySDM/physics/particle_advection/implicit_in_space.py b/PySDM/physics/particle_advection/implicit_in_space.py
+--- a/PySDM/physics/particle_advection/implicit_in_space.py	(revision c256737f19eeb34f642e6fb85e54b5f87f346831)
++++ b/PySDM/physics/particle_advection/implicit_in_space.py	(date 1748961143441)
+@@ -1,12 +1,14 @@
+ """
+ eqs. 14-16 in [Arabas et al. 2015](https://doi.org/10.5194/gmd-8-1677-2015)
+ """
+-
++from .monte_carlo import MonteCarlo
+ 
+ class ImplicitInSpace:  # pylint: disable=too-few-public-methods
+     def __init__(self, _):
+         pass
+ 
+     @staticmethod
+-    def displacement(_, position_in_cell, c_l, c_r):
++    def displacement(_, position_in_cell, cell_id, c_l, c_r, use_monte_carlo, u01):
++        if use_monte_carlo:
++            return MonteCarlo.displacement(_, position_in_cell, cell_id, c_l, c_r, u01)
+         return (c_l * (1 - position_in_cell) + c_r * position_in_cell) / (1 - c_r + c_l)
+Index: PySDM/physics/particle_advection/explicit_in_space.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/PySDM/physics/particle_advection/explicit_in_space.py b/PySDM/physics/particle_advection/explicit_in_space.py
+--- a/PySDM/physics/particle_advection/explicit_in_space.py	(revision c256737f19eeb34f642e6fb85e54b5f87f346831)
++++ b/PySDM/physics/particle_advection/explicit_in_space.py	(date 1748960605542)
+@@ -1,12 +1,14 @@
+ """
+ basic explicit-in-space Euler scheme
+ """
+-
++from .monte_carlo import MonteCarlo
+ 
+ class ExplicitInSpace:  # pylint: disable=too-few-public-methods
+     def __init__(self, _):
+         pass
+ 
+     @staticmethod
+-    def displacement(_, position_in_cell, c_l, c_r):
++    def displacement(_, position_in_cell, cell_id, c_l, c_r, use_monte_carlo, u01):
++        if use_monte_carlo:
++            return MonteCarlo.displacement(_, position_in_cell, cell_id, c_l, c_r, u01)
+         return c_l * (1 - position_in_cell) + c_r * position_in_cell
