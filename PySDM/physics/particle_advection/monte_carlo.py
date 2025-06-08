@@ -1,15 +1,15 @@
+import math
+
 class MonteCarlo:
     def __init__(self, _):
         pass
 
     @staticmethod
-    def displacement(_, position_in_cell, cell_id, c_l, c_r, u01):
+    def displacement(_, position_in_cell, c_l, c_r, u01):
         c = max(c_l, c_r)
         probability_of_shift = abs(c)
-        assert (
-            probability_of_shift
-            < 1
-        )
+        guaranteed_shift = math.floor(probability_of_shift)
+        probability_of_shift -= guaranteed_shift
 
         sign = int(abs(c) / c)
-        return cell_id + (probability_of_shift > u01) * sign
+        return position_in_cell + (guaranteed_shift * sign) + (probability_of_shift > u01) * sign

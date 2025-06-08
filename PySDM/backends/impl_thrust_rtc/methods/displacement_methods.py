@@ -26,6 +26,7 @@ class DisplacementMethods(ThrustRTCBackendMethods):
                     "cell_origin",
                     "position_in_cell",
                     "n_substeps",
+                    "enable_monte_carlo",
                 ),
                 name_iter="i",
                 body=f"""
@@ -96,7 +97,7 @@ class DisplacementMethods(ThrustRTCBackendMethods):
 
     @nice_thrust(**NICE_THRUST_FLAGS)
     def calculate_displacement(
-        self, *, dim, displacement, courant, cell_origin, position_in_cell, n_substeps
+        self, *, dim, displacement, courant, cell_origin, position_in_cell, n_substeps, enable_monte_carlo
     ):
         n_dim = len(courant.shape)
         n_sd = position_in_cell.shape[1]

@@ -15,14 +15,14 @@ from ...impl_common.backend_methods import BackendMethods
 @numba.njit(**{**conf.JIT_FLAGS, **{"parallel": False}})
 # pylint: disable=too-many-arguments
 def calculate_displacement_body_common(
-    dim, droplet, scheme, _l, _r, displacement, courant, position_in_cell, cell_id, n_substeps, use_monte_carlo_method, rng
+    dim, droplet, scheme, _l, _r, displacement, courant, position_in_cell, cell_id, n_substeps, enable_monte_carlo, rng
 ):
     displacement[dim, droplet] = scheme(
         position_in_cell[dim, droplet],
         cell_id[dim, droplet],
         courant[_l] / n_substeps,
         courant[_r] / n_substeps,
-        use_monte_carlo_method,
+        enable_monte_carlo,
         rng.unform(0., 1.)
     )
 
@@ -31,7 +31,7 @@ class DisplacementMethods(BackendMethods):
     @numba.njit(**{**conf.JIT_FLAGS, **{"parallel": False, "cache": False}})
     # pylint: disable=too-many-arguments
     def calculate_displacement_body_1d(
-        dim, scheme, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, use_monte_carlo_method, rng
+        dim, scheme, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, enable_monte_carlo, rng
     ):
         length = displacement.shape[1]
         for droplet in numba.prange(length):  # pylint: disable=not-an-iterable
@@ -49,7 +49,7 @@ class DisplacementMethods(BackendMethods):
                 position_in_cell,
                 cell_id,
                 n_substeps,
-                use_monte_carlo_method,
+                enable_monte_carlo,
                 rng,
             )
 
@@ -57,7 +57,7 @@ class DisplacementMethods(BackendMethods):
     @numba.njit(**{**conf.JIT_FLAGS, **{"parallel": False, "cache": False}})
     # pylint: disable=too-many-arguments
     def calculate_displacement_body_2d(
-        dim, scheme, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, use_monte_carlo_method, rng
+        dim, scheme, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, enable_monte_carlo, rng
     ):
         length = displacement.shape[1]
         for droplet in numba.prange(length):  # pylint: disable=not-an-iterable
@@ -81,7 +81,7 @@ class DisplacementMethods(BackendMethods):
                 position_in_cell,
                 cell_id,
                 n_substeps,
-                use_monte_carlo_method,
+                enable_monte_carlo,
                 rng,
             )
 
@@ -89,7 +89,7 @@ class DisplacementMethods(BackendMethods):
     @numba.njit(**{**conf.JIT_FLAGS, **{"parallel": False, "cache": False}})
     # pylint: disable=too-many-arguments
     def calculate_displacement_body_3d(
-        dim, scheme, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, use_monte_carlo_method, rng
+        dim, scheme, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, enable_monte_carlo, rng
     ):
         n_sd = displacement.shape[1]
         for droplet in numba.prange(n_sd):  # pylint: disable=not-an-iterable
@@ -115,12 +115,12 @@ class DisplacementMethods(BackendMethods):
                 position_in_cell,
                 cell_id,
                 n_substeps,
-                use_monte_carlo_method,
+                enable_monte_carlo,
                 rng,
             )
 
     def calculate_displacement(
-        self, *, dim, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, use_monte_carlo_method
+        self, *, dim, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, enable_monte_carlo
     ):
         n_dims = len(courant.shape)
         scheme = self.formulae.particle_advection.displacement
@@ -134,7 +134,7 @@ class DisplacementMethods(BackendMethods):
                 position_in_cell.data,
                 cell_id.data,
                 n_substeps,
-                use_monte_carlo_method,
+                enable_monte_carlo,
                 self.Random.generator,
             )
         elif n_dims == 2:
@@ -147,7 +147,7 @@ class DisplacementMethods(BackendMethods):
                 position_in_cell.data,
                 cell_id.data,
                 n_substeps,
-                use_monte_carlo_method,
+                enable_monte_carlo,
                 self.Random.generator,
             )
         elif n_dims == 3:
@@ -160,7 +160,7 @@ class DisplacementMethods(BackendMethods):
                 position_in_cell.data,
                 cell_id.data,
                 n_substeps,
-                use_monte_carlo_method,
+                enable_monte_carlo,
                 self.Random.generator,
             )
         else:

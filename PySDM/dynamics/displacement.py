@@ -21,12 +21,14 @@ class Displacement:  # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         enable_sedimentation=False,
+        enable_monte_carlo=False,
         precipitation_counting_level_index: int = 0,
         adaptive=DEFAULTS.adaptive,
         rtol=DEFAULTS.rtol,
     ):  # pylint: disable=too-many-arguments
         self.particulator = None
         self.enable_sedimentation = enable_sedimentation
+        self.enable_monte_carlo = enable_monte_carlo
         self.dimension = None
         self.grid = None
         self.courant = None
@@ -124,14 +126,20 @@ class Displacement:  # pylint: disable=too-many-instance-attributes
     def calculate_displacement(
         self, displacement, courant, cell_origin, position_in_cell
     ):
+        if self.enable_sedimentation and self.enable_monte_carlo:
+            dt = self.particulator.dt / self._n_substeps
+            dt_over_dz = dt / self.particulator.mesh.dz
+            courant += self.particulator.attributes["relative fall velocity"] / dt_over_dz
+
         self.particulator.calculate_displacement(
             displacement=displacement,
             courant=courant,
             cell_origin=cell_origin,
             position_in_cell=position_in_cell,
             n_substeps=self._n_substeps,
+            enable_monte_carlo=self.enable_monte_carlo,
         )
-        if self.enable_sedimentation:
+        if self.enable_sedimentation and not self.enable_monte_carlo:
             displacement_z = displacement[self.dimension - 1, :]
             dt = self.particulator.dt / self._n_substeps
             dt_over_dz = dt / self.particulator.mesh.dz
