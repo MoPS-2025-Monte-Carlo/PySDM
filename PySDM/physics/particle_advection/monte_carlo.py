@@ -1,5 +1,3 @@
-import math
-
 class MonteCarlo:
     def __init__(self, _):
         pass
