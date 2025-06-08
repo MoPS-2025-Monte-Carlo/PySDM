@@ -7,8 +7,6 @@ from functools import cached_property
 import numba
 
 from PySDM.backends.impl_numba import conf
-from PySDM.physics.particle_advection import MonteCarlo
-
 from ...impl_common.backend_methods import BackendMethods
 
 
