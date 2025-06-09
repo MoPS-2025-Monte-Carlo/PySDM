@@ -136,6 +136,7 @@ class TestExplicitEulerWithInterpolation:
             sut.courant,
             particulator.attributes["cell origin"],
             particulator.attributes["position in cell"],
+            cell_id=particulator.attributes["cell id"],
         )
 
         # Assert
