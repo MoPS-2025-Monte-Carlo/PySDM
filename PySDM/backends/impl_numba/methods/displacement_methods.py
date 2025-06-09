@@ -17,11 +17,11 @@ def calculate_displacement_body_common(
 ):
     displacement[dim, droplet] = scheme(
         position_in_cell[dim, droplet],
-        cell_id[dim, droplet],
+        cell_id[droplet],
         courant[_l] / n_substeps,
         courant[_r] / n_substeps,
         enable_monte_carlo,
-        rng.unform(0., 1.)
+        rng.uniform(0., 1.)
     )
 
 class DisplacementMethods(BackendMethods):

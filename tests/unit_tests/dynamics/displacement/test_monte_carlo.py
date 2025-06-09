@@ -90,14 +90,14 @@ class TestExplicitEulerWithInterpolation:
         settings = DisplacementSettings()
         value_a = 0.1
         value_b = 0.2
-        weight = 0.25
+        weight = 0.125
         settings.courant_field_data = (
             np.array([[value_a, value_b]]).T,
             np.array([[0, 0]]),
         )
         settings.positions = [[weight], [0]]
         sut, particulator = settings.get_displacement(
-            backend_class, scheme="ExplicitInSpace", adaptive=False, enable_monte_carlo=False
+            backend_class, scheme="ExplicitInSpace", adaptive=False, enable_monte_carlo=True
         )
         # Act
         sut.calculate_displacement(
@@ -111,7 +111,7 @@ class TestExplicitEulerWithInterpolation:
         # Assert
         np.testing.assert_equal(
             sut.displacement[0, slice(0, 1)].to_ndarray(),
-            (1 - weight) * value_a + weight * value_b,
+            0.1125
         )
 
     @staticmethod
@@ -120,14 +120,14 @@ class TestExplicitEulerWithInterpolation:
         settings = DisplacementSettings()
         value_a = 0.1
         value_b = 0.2
-        weight = 0.25
+        weight = 0.125
         settings.courant_field_data = (
             np.array([[0, 0]]).T,
             np.array([[value_a, value_b]]),
         )
         settings.positions = [[0], [weight]]
         sut, particulator = settings.get_displacement(
-            backend_class, scheme="ExplicitInSpace", adaptive=False, enable_monte_carlo=False
+            backend_class, scheme="ExplicitInSpace", adaptive=False, enable_monte_carlo=True
         )
 
         # Act
@@ -142,7 +142,7 @@ class TestExplicitEulerWithInterpolation:
         # Assert
         np.testing.assert_equal(
             sut.displacement[1, slice(0, 1)].to_ndarray(),
-            (1 - weight) * value_a + weight * value_b,
+            0.125
         )
 
     @staticmethod

@@ -3,7 +3,7 @@ class MonteCarlo:
         pass
 
     @staticmethod
-    def displacement(_, position_in_cell, c_l, c_r, u01):
+    def displacement(_, position_in_cell, cell_id, c_l, c_r, u01):
         c = max(c_l, c_r)
         probability_of_shift = abs(c)
         guaranteed_shift = int(probability_of_shift // 1)
