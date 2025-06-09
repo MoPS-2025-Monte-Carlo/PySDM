@@ -118,7 +118,7 @@ class DisplacementMethods(BackendMethods):
             )
 
     def calculate_displacement(
-        self, *, dim, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, enable_monte_carlo
+        self, *, dim, displacement, courant, cell_origin, position_in_cell, cell_id, n_substeps, enable_monte_carlo, rng
     ):
         n_dims = len(courant.shape)
         scheme = self.formulae.particle_advection.displacement
@@ -133,7 +133,7 @@ class DisplacementMethods(BackendMethods):
                 cell_id.data,
                 n_substeps,
                 enable_monte_carlo,
-                self.Random.generator,
+                rng,
             )
         elif n_dims == 2:
             DisplacementMethods.calculate_displacement_body_2d(
@@ -146,7 +146,7 @@ class DisplacementMethods(BackendMethods):
                 cell_id.data,
                 n_substeps,
                 enable_monte_carlo,
-                self.Random.generator,
+                rng,
             )
         elif n_dims == 3:
             DisplacementMethods.calculate_displacement_body_3d(
@@ -159,7 +159,7 @@ class DisplacementMethods(BackendMethods):
                 cell_id.data,
                 n_substeps,
                 enable_monte_carlo,
-                self.Random.generator,
+                rng,
             )
         else:
             raise NotImplementedError()
