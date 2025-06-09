@@ -438,7 +438,7 @@ class Particulator:  # pylint: disable=too-many-public-methods,too-many-instance
                 position_in_cell=position_in_cell,
                 n_substeps=n_substeps,
                 enable_monte_carlo=enable_monte_carlo,
-                rng=self.Random,
+                rng=self.Random(1,1).generator,
             )
 
     def isotopic_fractionation(self, heavy_isotopes: tuple):

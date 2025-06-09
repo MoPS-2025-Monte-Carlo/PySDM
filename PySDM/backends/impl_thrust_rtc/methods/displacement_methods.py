@@ -55,10 +55,11 @@ class DisplacementMethods(ThrustRTCBackendMethods):
             displacement[i + n_sd * dim] = {
                 self.formulae.particle_advection.displacement.c_inline(
                     position_in_cell="position_in_cell[i + n_sd * dim]",
+                    cell_id="cell_id[i + n_sd * dim]",
                     c_l="courant[_l] / n_substeps",
                     c_r="courant[_r] / n_substeps",
-                    use_monte_carlo="enable_monte_carlo",
-                    u01="u01[i]"
+                    enable_monte_carlo="false",
+                    u01="u01"
                 )
             };
             """.replace(
@@ -115,10 +116,11 @@ class DisplacementMethods(ThrustRTCBackendMethods):
                 trtc.DVInt64(courant.shape[0]),
                 trtc.DVInt64(courant.shape[1] if n_dim > 2 else -1),
                 cell_origin.data,
+                cell_id.data,
                 position_in_cell.data,
                 trtc.DVInt64(n_substeps),
-                enable_monte_carlo,
-                rng.data
+                trtc.DVBool(enable_monte_carlo),
+                trtc.DVDouble(1.0) # TODO
             ),
         )
 
